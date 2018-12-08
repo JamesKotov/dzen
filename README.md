@@ -6,7 +6,7 @@ Test web control for dzenmoney, written in February, 2010
 
 Make a test html control, such as on preview image:
 
-![sample](/blob/master/sample.gif)
+![sample](sample.gif)
 
 Key features requested are:
 
