@@ -1,0 +1,557 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html dir="ltr" xml:lang="ru-RU" lang="ru" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+
+    <title>Тестовое задание для Дзенмани</title>
+
+    <link href="http://yui.yahooapis.com/2.8.0r4/build/reset-fonts-grids/reset-fonts-grids.css" rel="stylesheet" type="text/css"/>
+
+    <link href="http://yui.yahooapis.com/2.8.0r4/build/base/base-min.css" rel="stylesheet" type="text/css"/>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.1/jquery.min.js" type="text/javascript"></script>
+
+    <style type="text/css">
+        <!--
+        /* стили для отображения контрола */
+        #scroller {
+            font-size: 12px;
+            height: 130px;
+            margin: 0;
+            overflow-x: scroll;
+            overflow-y: hidden;
+            position: relative;
+            z-index: 2000;
+            width: 100%;
+        }
+
+        #container {
+            width: auto
+        }
+
+        #container,
+        .loader,
+        .post {
+            height: 114px
+        }
+
+        .loader {
+            background: url(ajax-loader.gif) no-repeat center center;
+            border: 1px solid #fff;
+            margin: auto
+        }
+
+        .post {
+            background: #fff;
+            border: 1px solid #eaeaea;
+            border-left: 0;
+            float: left;
+            margin: 0;
+        }
+
+        .post .header_wrapper {
+            background: #eaeaea;
+            height: 25px;
+            margin-bottom: 3px;
+            padding: 5px;
+        }
+
+        .post .header {
+            clear: both;
+        }
+
+        .post .header .day {
+            font-size: 16px
+        }
+
+        .holiday {
+            color: #C20000
+        }
+
+        .workday {
+            color: #000
+        }
+
+        .workday .date {
+            color: #777
+        }
+
+        .post .header .balance {
+            background: #eaeaea;
+            float: right;
+            margin-top: -16px;
+            padding-left: 5px;
+            position: relative;
+            z-index: 20
+        }
+
+        .positive {
+            color: #208d20;
+        }
+
+        .negative {
+            color: red;
+        }
+
+        .post .header .day_n_date,
+        .post .row .name {
+            overflow: hidden;
+            white-space: nowrap;
+            width: 100%
+        }
+
+        .post .row .name {
+            color: #777
+        }
+
+        .post .row {
+            clear: both;
+            padding: 2px 5px;
+            z-index: 100
+        }
+
+        .post .row .value {
+            background: #fff;
+            color: black;
+            float: right;
+            font-size: 13px;
+            margin-top: -16px;
+            padding-left: 5px;
+            position: relative;
+            z-index: 20
+        }
+
+        .post,
+        .loader {
+            overflow: hidden;
+            width: 130px
+        }
+
+        .wrapper {
+            background: #f9f9f9;
+            border: 1px solid #aaf;
+            margin: 5px;
+            padding: 0;
+            width: 80%
+        }
+
+        -->
+    </style>
+
+    <script charset="utf-8" type="text/javascript">
+        <!--
+        var engine = {
+
+            posts: [],
+
+            target: null,
+
+            container: null,
+
+            scroller: null,
+
+            loader: null,
+
+            action: null,
+
+            busy: false,
+
+            count: 10,
+
+            format_num: function (val, sep, dot, frac) {
+                if (typeof (sep) == 'undefined') sep = String.fromCharCode(160);
+                if (typeof (dot) == 'undefined') dot = ',';
+
+                var sign = val >= 0 ? '+' : '&#8210;';
+
+                var num = parseInt(Math.abs(val)).toString();
+
+                var reg = /(-?\d+)(\d{3})/;
+                while (reg.test(num))
+                    num = num.replace(reg, '$1' + sep + '$2');
+
+                if (!frac)
+                    return sign + num;
+
+                if (typeof (frac) == 'undefined') frac = 2;
+
+                var a = this.toString();
+                if (a.indexOf('.') >= 0) {
+                    a = a.toString().substr(a.indexOf('.') + 1, frac);
+                    a += Array(frac - a.length + 1).join('0');
+                } else
+                    a = Array(frac + 1).join('0');
+
+                return sign + num + dot + a;
+            },
+
+
+            render: function (obj) {
+                if (!obj.id)
+                    return;
+
+                var title = '';
+                var header_text = '';
+                var balance = '';
+
+                if (obj.day) {
+                    title = obj.day + ' ';
+                    header_text += '<span class="day">' + obj.day + '</span>&nbsp;';
+                }
+
+                if (obj.date) {
+                    title += obj.date;
+                    header_text += '<span class="date">' + obj.date + '</span>';
+                }
+
+                if (obj.balance) {
+                    if (obj.balance.name)
+                        title += ' - ' + obj.balance.name;
+
+                    if (obj.balance.value) {
+
+                        var div_class = 'negative';
+                        if (obj.balance.value > 0) div_class = 'positive';
+
+                        balance = '<div class="balance ' + div_class + '">';
+                        balance += this.format_num(obj.balance.value);
+                        balance += '</div>';
+                    }
+                }
+
+                var header_class = 'workday';
+                if (obj.holiday) header_class = 'holiday';
+
+                var xhtml = '<div class="post" id=post_' + obj.id + '>';
+                xhtml += '<div class="header_wrapper">';
+                xhtml += '<div class="header ' + header_class + '" title="' + title + '">';
+                xhtml += '<div class="day_n_date">' + header_text + '</div>';
+                xhtml += balance;
+                xhtml += '</div>';
+                xhtml += '</div>';
+
+                if (obj.transactions && obj.transactions.length > 0) {
+                    that = this;
+                    jQuery.each(obj.transactions,
+                        function (i, val) {
+                            if (val.name && val.name !== '') {
+                                var result = '';
+                                result += '<div class="row" title="' + val.name + '">';
+                                result += '<div class="name">' + val.name + '</div>';
+
+                                if (val.value && val.value !== '') {
+                                    result += '<div class="value">';
+                                    result += that.format_num(val.value);
+                                    result += '</div>';
+                                }
+
+                                result += '</div>';
+                                xhtml += result;
+                            }
+                            return true;
+                        })
+                }
+
+                xhtml += '</div>';
+                return xhtml;
+            },
+
+            init: function (posts, target, container, scroller, loader, load_count, action_url) {
+                if (!target || !container || !scroller || !loader || !action_url)
+                    return;
+
+                this.target = $(target);
+
+                this.container = $(container);
+
+                this.scroller = $(scroller);
+
+                this.loader = $(loader);
+
+                if (load_count > 0)
+                    this.count = load_count;
+
+                if (action_url !== '')
+                    this.action = action_url;
+
+                this.append(posts);
+
+                var that = this;
+
+                this.scroller.scroll(function () {
+                    if (that.container.width() - that.scroller.width() <= that.scroller.scrollLeft() + 45) {
+                        that.scrollPosition = that.scroller.scrollLeft();
+                        if (!that.busy) {
+                            that.get();
+                        }
+                    }
+                });
+            },
+
+            append: function (posts) {
+                posts = (posts instanceof Array) ? posts : [];
+                this.posts = this.posts.concat(posts);
+
+                if (this.posts.length > 0)
+                    this.container.width((this.posts.length + 1) * 131);
+
+                for (var i = 0; i < posts.length; i++) {
+                    this.target.append(this.render(posts[i]));
+                }
+
+                if (this.scrollPosition !== undefined && this.scrollPosition !== null)
+                    this.scroller.scrollLeft(this.scrollPosition);
+            },
+
+            get: function (num) {
+                if (!this.target || !this.container || !this.action || this.busy) return;
+
+                var lastId = 0;
+                var lastBalance = 0;
+                if (this.posts && this.posts.length) {
+                    lastId = this.posts[this.posts.length - 1].id;
+                    lastBalance = this.posts[this.posts.length - 1].balance.value + this.posts[this.posts.length - 1].day_balance;
+                }
+                lastBalance = lastBalance.toString();
+                lastId = lastId.toString();
+
+                this.setBusy(true);
+
+                var that = this;
+
+                var portion = this.count;
+                if (num && num > 0) portion = num;
+
+                $.getJSON(this.action, {count: portion, last: lastId, balance: lastBalance},
+                    function (data) {
+                        if (data.length > 0)
+                            that.append(data);
+                        that.setBusy(false);
+                    }
+                );
+            },
+
+            showLoading: function (bState) {
+                if (bState)
+                    this.loader.show();
+                else
+                    this.loader.hide();
+            },
+
+            setBusy: function (bState) {
+                this.showLoading(this.busy = bState);
+            }
+        };
+
+        $(document).ready(function () {
+            var load_count = Math.round(window.screen.width / 131) + 1;
+            var action_url = 'dzen.php';
+            engine.init(null, $("#posts"), $("#container"), $("#scroller"), $("#loading"), 2, action_url);
+            engine.get(load_count);
+        });
+        -->
+    </script>
+</head>
+<body>
+<div id="doc3">
+    <div id="hd">
+        <h1>Тестовое задание для Дзенмани</h1>
+        <p>Версия 1.7</p>
+        <p>Выполнил <strong>Стриго Евгений Васильевич.</strong></p>
+    </div>
+    <div id="bd">
+        <h2>Задание</h2>
+        <p>Образец контрола из задания:</p>
+        <p>
+            <img alt="Образец контрола из задания" height="233" src="sample.gif" width="701"/>
+        </p>
+        <h2>Демонстрация варианта реализации:</h2>
+        <div class="wrapper">
+            <div id="scroller">
+                <div id="container">
+                    <div id="posts"></div>
+                    <div id="loading">
+                        <div class="loader">&nbsp;</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <h2>Описание реализации</h2>
+        <h3>Технологии</h3>
+        <p>В&nbsp;работе использованы:</p>
+        <ul>
+            <li>
+                <span class="nobr">
+                    <span class="nobr">javascript-фреймворк</span>
+                </span>
+                <a href="http://jquery.com/" target="_blank">jQuery</a>;
+            </li>
+            <li>
+                <span class="nobr">css-фреймворк</span> из&nbsp;комплекта
+                <a href="http://developer.yahoo.com/yui/" target="_blank" class="nobr">YUI-2</a>
+                (компоненты reset, fonts, grids и&nbsp;base)*.
+            </li>
+        </ul>
+        <p class="small">
+            <em>* использованный <span class="nobr">css-фреймворк</span> не&nbsp;является необходимым для работы
+                контрола и&nbsp;использован, главным образом, для верстки макета страницы с&nbsp;примером</em>
+        </p>
+        <h3>Клиентская часть</h3>
+        <p>После загрузки страницы, вычисляется количество элементов (дней) которые нужно загрузить за&nbsp;один запрос.
+            Формула для вычисления&nbsp;&mdash; <em>ширина разрешения экрана делённая <span class="nobr">на&nbsp;ширину элемента + 1</span></em>.
+            Расчёт исходящий из&nbsp;ширины экрана, а&nbsp;не&nbsp;окна браузера, используется для того, чтобы при любом
+            разрешении экрана и&nbsp;при любом размере самого контрола, он&nbsp;гарантированно закрывал&nbsp;бы
+            элементами всю свою ширину (при условии, что дата начала вывода в&nbsp;принципе позволяет закрыть элементами
+            всю ширину контрола).</p>
+        <p>После расчёта инициализируется объект <em>engine</em>, отвечающий за&nbsp;загрузку и&nbsp;отображение
+            элементов. Объекту можно передать стартовый набор элементов в&nbsp;качестве параметра, либо вызвать его
+            метод <em>get()</em> после инициализации. В&nbsp;данном примере выбран второй способ.</p>
+        <p>Структура объекта engine:</p>
+        <ul>
+            <li>свойство posts: array&nbsp;&mdash; хранит массив загруженных элементов;</li>
+            <li>свойство target: object&nbsp;&mdash; хранит ссылку на&nbsp;объект типа div, в&nbsp;который загружаются
+                элемента;
+            </li>
+            <li>свойство loader: object&nbsp;&mdash; хранит ссылку на&nbsp;объект типа div, который отображает индикатор
+                загрузки;
+            </li>
+            <li>свойство container: object&nbsp;&mdash; хранит ссылку на&nbsp;объект типа div, в&nbsp;котором находятся
+                блоки target и&nbsp;loading;
+            </li>
+            <li>свойство scroller: object&nbsp;&mdash; хранит ссылку на&nbsp;объект типа div, который реализует
+                прокрутку;
+            </li>
+            <li>свойство action: string&nbsp;&mdash; хранит url серверной части контрола;</li>
+            <li>свойство busy: bool&nbsp;&mdash; отображает состояние <span class="nobr">ajax-объекта</span> (ожидает
+                данные либо свободен):
+            </li>
+            <li>свойство count: int&nbsp;&mdash; количество элементов, загружаемых за&nbsp;один запрос;</li>
+            <li>метод init()&nbsp;&mdash; метод инициализации объекта;</li>
+            <li>метод get()&nbsp;&mdash; реализует запрос к&nbsp;серверу и&nbsp;получение ответа от&nbsp;него;</li>
+            <li>метод append()&nbsp;&mdash; метод вставки загруженных элементов в&nbsp;контейнер указанный в&nbsp;свойстве
+                target;
+            </li>
+            <li>метод render()&nbsp;&mdash; реализует генерацию <span class="nobr">html-кода</span> для отображения
+                элемента;
+            </li>
+            <li>метод plot_row()&nbsp;&mdash; реализует генерацию кода для транзакционных строк элементов;</li>
+            <li>метод setBusy()&nbsp;&mdash; реализует переключение состояния объекта engine;</li>
+            <li>метод showLoading()&nbsp;&mdash; реализует отображение/сокрытие индикатора загрузки.</li>
+        </ul>
+        <p>Расчёт позиции прокрутки, при которой необходимо загрузить следующую порцию элементов делается при выполнении
+            следующего неравенства: <em>C.width&nbsp;&mdash; S.width &lt;= S.scrollpos + K</em>, где С&nbsp;&mdash;
+            <span class="nobr"><span class="nobr">блок-контейнер</span></span> для элементов и&nbsp;<span
+                    class="nobr"><span class="nobr">заставки-загрузчика</span></span>, S&nbsp;&mdash; родительский блок
+            с&nbsp;линейкой прокрутки, а&nbsp;K&nbsp;&mdash; коэффициент корректирующий расстояние до&nbsp;конца линейки
+            прокрутки, при котором начинается загрузка (в&nbsp;данном примере он&nbsp;равен 45). Ширина <span
+                    class="nobr"><span class="nobr">блока-контейнера</span></span> С&nbsp;изменяется динамически, при
+            каждой загрузке элементов, и&nbsp;рассчитывается по&nbsp;формуле <em>(Nобщ + 1) * E.width</em>, где Nобщ&nbsp;&mdash;
+            общее число элементов, загруженных в&nbsp;контрол, E.width&nbsp;&mdash; ширина одного элемента. Общее число
+            элементов увеличивается на&nbsp;единицу, <span class="nobr"><span class="nobr">т.&thinsp;к.</span></span>
+            после всех элементов располагается блок отображающий индикатор <span class="nobr"><span class="nobr">ajax-загрузки</span></span>.
+        </p>
+        <p>Ответ сервера на&nbsp;запрос элементов представляет собой <span class="nobr"><span
+                class="nobr">JSON-строку</span></span>. Массив, описывающий элементы имеет следующую структуру:</p>
+        <ol>
+            <li>id: int&nbsp;&mdash; идентификатор дня (представляет собою Unix timestamp по&nbsp;состоянию на&nbsp;0
+                часов 0&nbsp;минут 0 секунд рассматриваемого дня;
+            </li>
+            <li>day: string&nbsp;&mdash; строка описывающая день недели рассматриваемого дня;</li>
+            <li>date: string&nbsp;&mdash; строка описывающая дату рассматриваемого дня;</li>
+            <li>balance: array&nbsp;&mdash; массив описания баланс пользователя на&nbsp;начало рассматриваемого дня;
+                массив имеет следующую структуру:
+                <ul>
+                    <li>name: string&nbsp;&mdash; строка описывающая название баланса (слово "баланс" на языке
+                        пользователя контрола);
+                    </li>
+                    <li>value: int&nbsp;&mdash; число, описывающее значение баланса пользователя;</li>
+                </ul>
+            </li>
+            <li>transactions: array&nbsp;&mdash; - массив транзакций пользователя за рассматриваемый день. Состоит из
+                массивов, описывающих каждую транзакцию
+            </li>
+            <li>day_balance**: int&nbsp;&mdash; сумма по&nbsp;всем транзакциям за день.</li>
+        </ol>
+        <p>Массив описывающий каждую транзакцию имеет ту же структуру, что и массив описывающий баланс пользователя:</p>
+        <ul>
+            <li>name: string&nbsp;&mdash; строка описывающая название транзакции на языке пользователя контрола;</li>
+            <li>value: int&nbsp;&mdash; число, описывающее сумму транзакции.</li>
+        </ul>
+        <p>Из&nbsp;перечисленных строк массива описывающего элементы строго обязательной является лишь строка&nbsp;id,
+            без которой описанный в&nbsp;массиве элемент отображаться не&nbsp;будет.</p>
+        <p>Из&nbsp;транзакционных строк 5&nbsp;&mdash; 16 в&nbsp;массиве могут присутствовать не&nbsp;все, а&nbsp;произвольное
+            количество (от&nbsp;0 до&nbsp;всех). При этом, впрочем, надо обратить внимание на&nbsp;то, что в&nbsp;задании
+            не&nbsp;оговорено, что контрол может растягиваться или прокручиваться <span class="nobr"><span class="nobr">по-горизонтали</span></span>.
+        </p>
+        <p>
+            <span class="nobr">Get-запрос</span> передаваемый серверу содержит в&nbsp;себе следующие параметры:</p>
+        <ol>
+            <li>count: int&nbsp;&mdash; число элементов в&nbsp;&laquo;порции&raquo;;</li>
+            <li>last: int&nbsp;&mdash; идентификатор последнего загруженного в&nbsp;контрол элемента;</li>
+            <li>balance**: int&nbsp;&mdash; баланс на&nbsp;конец дня последнего загруженного элемента. Рассчитывается
+                как сумма строк balance и&nbsp;day_balance последнего загруженного элемента.
+            </li>
+        </ol>
+        <p class="small">
+            <em>** следует сразу уточнить, что параметр запроса &laquo;balance&raquo; и&nbsp;строка возвращаемого
+                массива &laquo;day_balance&raquo; включены только в&nbsp;данную <span class="nobr"><span class="nobr">демо-версию</span></span>
+                контрола, в&nbsp;связи с&nbsp;особенностями <span class="nobr">серверной части</span>, о&nbsp;которых
+                будет рассказано ниже. В&nbsp;рабочей версии этот параметр и&nbsp;эта строка не&nbsp;требуются, <span
+                        class="nobr"><span class="nobr">т.&thinsp;к.</span></span> начальный баланс на&nbsp;конкретную
+                дату будет внутренне определятся <span class="nobr">на&nbsp;сервере</span>.</em>
+        </p>
+        <p>Ширина самого контрола является плавающей. В&nbsp;данном примере она установлена в&nbsp;размере 80% от&nbsp;доступной
+            ему ширины родительского блока.</p>
+        <p>При отображении данных, денежные величины имеют приоритет перед поясняющими подписями. <span
+                class="nobr"><span class="nobr">Т.&thinsp;е.</span></span>, если подпись не&nbsp;входит по&nbsp;ширине в&nbsp;пространство
+            строки, оставшееся после вывода денежного значения, то&nbsp;она будет обрезана. Содержание подписи
+            дублируется в&nbsp;её параметре title, так чтобы пользователь мог наведя курсором на&nbsp;строку увидеть
+            полной текст подписи. Этот механизм реализован как в&nbsp;строках описывающих расходы и&nbsp;доходы, так и&nbsp;в&nbsp;заголовке
+            каждого элемента (<span class="nobr"><span class="nobr">т.&thinsp;е.</span></span>, название месяца, число и&nbsp;день
+            недели могут быть обрезаны, и&nbsp;они так&nbsp;же продублированы в&nbsp;подписи).</p>
+        <h3>Серверная часть</h3>
+        <p>Вся подготовка данных для отображения (определение начального баланса, группировка транзакций по&nbsp;дням)
+            возложена на&nbsp;серверную часть контрола.</p>
+        <p>В&nbsp;настоящем примере серверная часть имеет очень упрощённый механизм работы, предназначенный лишь для
+            демонстрации работы контрола. Все данные генерируются случайным образом, исходя из&nbsp;переданного серверу
+            значение баланса и&nbsp;идентификатора дня. Генерация осуществляется в&nbsp;периоде от&nbsp;1го декабря до&nbsp;текущей
+            даты на&nbsp;сегодня. Описание каждого дня генерируется непосредственно в&nbsp;виде массива со&nbsp;структурой,
+            описанной выше. В&nbsp;связи с&nbsp;тем, что высота контрола в&nbsp;примере позволяется отображать не&nbsp;более
+            4х транзакций в&nbsp;день, максимальное число транзакционных строк в&nbsp;массиве ограничено четырьмя.</p>
+        <p>Сгенерированное нужное количество массивов, описывающих дни, помещается в&nbsp;качестве элементов в&nbsp;общий
+            результирующий массив в&nbsp;порядке возрастания даты. Результирующий массив конвертируется в&nbsp;<span
+                    class="nobr"><span class="nobr">json-строку</span></span> и&nbsp;возвращается клиенту.</p>
+        <p>В&nbsp;реальном случае, логика <span class="nobr"><span class="nobr">backend-приложения</span></span> может
+            быть любой, сколь угодно сложной, однако она должна выдавать требуемое количество массивов указанной
+            структуры (кроме поля day_balance, которое не&nbsp;является обязательным), исходя из&nbsp;двух указанных
+            выше параметров (параметр balancе так&nbsp;же ные является обязательным, более того, в&nbsp;реальном
+            приложении использовать его не&nbsp;рекомендуется из&nbsp;соображений целостности данных).</p>
+        <h3>Исходный код</h3>
+        <p>Исходный <span class="nobr">html-код</span> клиентской части проверен на&nbsp;валидаторе W3C:</p>
+        <p>
+            <a href="http://validator.w3.org/check?uri=referer" target="_blank">
+                <img alt="Valid XHTML 1.0 Transitional" src="http://www.w3.org/Icons/valid-xhtml10-blue"
+                     style="border:0;width:88px;height:31px"/>
+            </a>
+        </p>
+        <p>Исходный <span class="nobr">css-код</span> не&nbsp;проходит полную проверку на&nbsp;валидаторе CSS2.1, <span
+                class="nobr">из-за</span> использования параметров <span class="nobr">overflow-x</span> и&nbsp;<span
+                class="nobr">overflow-y</span>, а&nbsp;также <span class="nobr">из-за</span> наличия <span class="nobr">css-хаков</span>
+            для IE&nbsp;во&nbsp;фреймворке YUI, вызывающих на&nbsp;валидаторе ошибку разбора.</p>
+        <p>
+            <a href="http://jigsaw.w3.org/css-validator/check/referer" target="_blank">
+                <img alt="Правильный CSS!" src="http://jigsaw.w3.org/css-validator/images/vcss-blue"
+                     style="border:0;width:88px;height:31px"/>
+            </a>
+        </p>
+        <p>В&nbsp;версии 1.5 былы добавлена поддержка неограниченного числа транзакций в&nbsp;день, и&nbsp;так&nbsp;же
+            поддержка мультиязычного интерфейса контрола (названия транзакций, дней недели и&nbsp;месяцев теперь
+            загружаются с&nbsp;сервера).</p>
+    </div>
+</div>
+<div id="ft">
+    <p>&nbsp;</p>
+    <p>&copy; Стриго Е.В., 2010г.</p>
+</div>
+</body>
+</html>
